@@ -2,66 +2,121 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>枋寮志工活動回憶錄</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>枋寮志工：宇宙回憶錄</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.css">
     <style>
-        :root { --gap: 10px; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #fafafa; margin: 0; padding: 20px; }
-        h1 { text-align: center; color: #333; margin-bottom: 30px; }
-        
-        /* 網格佈局：電腦 4 欄，平板 3 欄，手機 2 欄 */
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: var(--gap);
-            max-width: 1200px;
-            margin: 0 auto;
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: radial-gradient(circle, #1b2735 0%, #090a0f 100%); 
+            overflow: hidden; /* 停用傳統滾輪 */
+            cursor: grab;
         }
-        @media (max-width: 1024px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 600px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+        body:active { cursor: grabbing; }
 
-        .gallery a { display: block; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 8px; background: #eee; }
-        .gallery img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; display: block; }
-        .gallery img:hover { transform: scale(1.05); }
+        /* 巨大的畫布 */
+        #universe {
+            position: absolute;
+            width: 4000px; /* 寬度 */
+            height: 4000px; /* 高度 */
+            top: 0; left: 0;
+        }
+
+        .star-photo {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%; /* 讓照片變圓形像星星 */
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s;
+        }
+        .star-photo:hover {
+            transform: scale(1.2);
+            z-index: 999;
+            border-color: #fff;
+        }
+
+        #title-overlay {
+            position: fixed;
+            top: 20px; left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1.5rem;
+            pointer-events: none; /* 讓標題不影響抓取 */
+            text-shadow: 0 0 10px rgba(255,255,255,0.8);
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
 
-    <h1>枋寮志工回憶相簿</h1>
-    <div class="gallery" id="gallery">
-        </div>
+<div id="title-overlay">✨ 點擊照片查看回憶 | 按住滑鼠拖拽探索 ✨</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.js"></script>
-    <script>
-        const gallery = document.getElementById('gallery');
+<div id="universe">
+    </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.js"></script>
+<script>
+    const universe = document.getElementById('universe');
+    const totalPhotos = 100; // 照片總數
+    const canvasSize = 4000; // 畫布大小
+
+    // 1. 生成隨機分布的照片
+    for (let i = 1; i <= totalPhotos; i++) {
+        const a = document.createElement('a');
+        a.href = `fangliao (${i}).jpg`; // 這裡確保檔名正確
         
-        // --- 這裡是你唯一需要修改的地方 ---
-        const totalPhotos = 100; // 如果你有 150 張，就改成 150
-        const fileNamePrefix = 'fangliao'; // 你的照片檔名前綴
-        const fileExtension = 'jpg'; // 如果是 .JPG 就改成 JPG，如果是 .jpeg 就改 jpeg
-        // ------------------------------
+        const img = document.createElement('img');
+        img.src = `fangliao (${i}).jpg`;
+        img.className = 'star-photo';
+        
+        // 隨機座標
+        const x = Math.random() * (canvasSize - 200);
+        const y = Math.random() * (canvasSize - 200);
+        
+        img.style.left = x + 'px';
+        img.style.top = y + 'px';
+        img.loading = "lazy";
+        
+        a.appendChild(img);
+        universe.appendChild(a);
+    }
 
-        for (let i = 1; i <= totalPhotos; i++) {
-            const a = document.createElement('a');
-            // 這裡對應 Windows 自動命名的格式：fangliao (1).jpg
-            const imgSrc = `${fileNamePrefix} (${i}).${fileExtension}`;
-            
-            a.href = imgSrc;
-            const img = document.createElement('img');
-            img.src = imgSrc;
-            img.loading = "lazy"; // 讓 100 張照片不會一次載入，手機才不會卡死
-            
-            a.appendChild(img);
-            gallery.appendChild(a);
-        }
+    // 2. 滑鼠抓取拖拽功能
+    let isDragging = false;
+    let startX, startY, scrollLeft, scrollTop;
 
-        window.addEventListener('load', function() {
-            baguetteBox.run('.gallery', {
-                animation: 'fadeIn', // 放大時的動畫
-                noScrollbars: true
-            });
-        });
-    </script>
+    window.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.pageX - window.scrollX;
+        startY = e.pageY - window.scrollY;
+        scrollLeft = window.scrollX;
+        scrollTop = window.scrollY;
+    });
+
+    window.addEventListener('mouseleave', () => isDragging = false);
+    window.addEventListener('mouseup', () => isDragging = false);
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - startX;
+        const y = e.pageY - startY;
+        window.scrollTo(scrollLeft - x, scrollTop - y);
+    });
+
+    // 3. 手機觸控拖拽 (預設瀏覽器會處理，但我們優化它)
+    // 注意：手機上建議直接滑動即可，不需額外 JS
+
+    // 4. 初始化放大查看
+    window.addEventListener('load', () => {
+        baguetteBox.run('#universe');
+        // 初始化時自動滾動到畫布中心
+        window.scrollTo(canvasSize/2 - window.innerWidth/2, canvasSize/2 - window.innerHeight/2);
+    });
+</script>
+
 </body>
 </html>
