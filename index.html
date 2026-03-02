@@ -3,120 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>枋寮志工：宇宙回憶錄</title>
+    <title>枋寮志工：沈浸式回憶星空</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.css">
+    
     <style>
+        :root { --primary-glow: rgba(255, 255, 255, 0.3); }
+        
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: radial-gradient(circle, #1b2735 0%, #090a0f 100%); 
-            overflow: hidden; /* 停用傳統滾輪 */
-            cursor: grab;
+            background: #050810; overflow: hidden; font-family: 'Noto Sans TC', sans-serif;
+            touch-action: none;
         }
-        body:active { cursor: grabbing; }
 
-        /* 巨大的畫布 */
+        /* --- CSS 設計：閃爍星空背景 --- */
+        #star-container { position: fixed; width: 100%; height: 100%; z-index: 0; }
+        .bg-star {
+            position: absolute; background: white; border-radius: 50%;
+            opacity: 0.5; animation: twinkle var(--duration) infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* 宇宙主容器 */
         #universe {
-            position: absolute;
-            width: 4000px; /* 寬度 */
-            height: 4000px; /* 高度 */
-            top: 0; left: 0;
+            position: absolute; top: 0; left: 0; will-change: transform; z-index: 1;
+        }
+
+        .star-link {
+            position: absolute; display: block; width: 140px; height: 140px;
+            transform: translate(-50%, -50%); transition: filter 0.3s;
         }
 
         .star-photo {
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            object-fit: cover;
-            border-radius: 50%; /* 讓照片變圓形像星星 */
+            width: 100%; height: 100%; object-fit: cover; border-radius: 50%;
             border: 2px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.3);
-            transition: transform 0.3s;
+            box-shadow: 0 0 15px var(--primary-glow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
         }
+
         .star-photo:hover {
-            transform: scale(1.2);
-            z-index: 999;
-            border-color: #fff;
+            transform: scale(1.25); border-color: #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.6);
+            z-index: 100;
         }
 
-        #title-overlay {
-            position: fixed;
-            top: 20px; left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 1.5rem;
-            pointer-events: none; /* 讓標題不影響抓取 */
-            text-shadow: 0 0 10px rgba(255,255,255,0.8);
-            z-index: 1000;
+        /* --- UI 設計 --- */
+        #ui-layer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 1000;
         }
+        .header {
+            position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+            color: white; text-align: center; pointer-events: none;
+        }
+        .header h1 { margin: 0; font-weight: 500; letter-spacing: 4px; font-size: 1.8rem; text-shadow: 0 0 20px rgba(255,255,255,0.5); }
+        .header p { font-weight: 300; opacity: 0.7; font-size: 0.9rem; margin-top: 5px; }
+
+        #reset-btn {
+            position: absolute; bottom: 30px; right: 30px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+            color: white; padding: 10px 20px; border-radius: 30px;
+            cursor: pointer; pointer-events: auto; backdrop-filter: blur(5px);
+            transition: 0.3s; font-size: 0.8rem;
+        }
+        #reset-btn:hover { background: rgba(255,255,255,0.2); border-color: #fff; }
     </style>
-</head>
-<body>
-
-<div id="title-overlay">✨ 點擊照片查看回憶 | 按住滑鼠拖拽探索 ✨</div>
-
-<div id="universe">
-    </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.js"></script>
-<script>
-    const universe = document.getElementById('universe');
-    const totalPhotos = 100; // 照片總數
-    const canvasSize = 4000; // 畫布大小
-
-    // 1. 生成隨機分布的照片
-    for (let i = 1; i <= totalPhotos; i++) {
-        const a = document.createElement('a');
-        a.href = `fangliao (${i}).jpg`; // 這裡確保檔名正確
-        
-        const img = document.createElement('img');
-        img.src = `fangliao (${i}).jpg`;
-        img.className = 'star-photo';
-        
-        // 隨機座標
-        const x = Math.random() * (canvasSize - 200);
-        const y = Math.random() * (canvasSize - 200);
-        
-        img.style.left = x + 'px';
-        img.style.top = y + 'px';
-        img.loading = "lazy";
-        
-        a.appendChild(img);
-        universe.appendChild(a);
-    }
-
-    // 2. 滑鼠抓取拖拽功能
-    let isDragging = false;
-    let startX, startY, scrollLeft, scrollTop;
-
-    window.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        startX = e.pageX - window.scrollX;
-        startY = e.pageY - window.scrollY;
-        scrollLeft = window.scrollX;
-        scrollTop = window.scrollY;
-    });
-
-    window.addEventListener('mouseleave', () => isDragging = false);
-    window.addEventListener('mouseup', () => isDragging = false);
-
-    window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        e.preventDefault();
-        const x = e.pageX - startX;
-        const y = e.pageY - startY;
-        window.scrollTo(scrollLeft - x, scrollTop - y);
-    });
-
-    // 3. 手機觸控拖拽 (預設瀏覽器會處理，但我們優化它)
-    // 注意：手機上建議直接滑動即可，不需額外 JS
-
-    // 4. 初始化放大查看
-    window.addEventListener('load', () => {
-        baguetteBox.run('#universe');
-        // 初始化時自動滾動到畫布中心
-        window.scrollTo(canvasSize/2 - window.innerWidth/2, canvasSize/2 - window.innerHeight/2);
-    });
-</script>
-
-</body>
-</html>
