@@ -1,1 +1,67 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>枋寮志工活動回憶錄</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.css">
+    <style>
+        :root { --gap: 10px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #fafafa; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #333; margin-bottom: 30px; }
+        
+        /* 網格佈局：電腦 4 欄，平板 3 欄，手機 2 欄 */
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--gap);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        @media (max-width: 1024px) { .gallery { grid-template-columns: repeat(3, 1fr); } }
+        @media (max-width: 600px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
 
+        .gallery a { display: block; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 8px; background: #eee; }
+        .gallery img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; display: block; }
+        .gallery img:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+
+    <h1>枋寮志工回憶相簿</h1>
+    <div class="gallery" id="gallery">
+        </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.js"></script>
+    <script>
+        const gallery = document.getElementById('gallery');
+        
+        // --- 這裡是你唯一需要修改的地方 ---
+        const totalPhotos = 100; // 如果你有 150 張，就改成 150
+        const fileNamePrefix = 'fangliao'; // 你的照片檔名前綴
+        const fileExtension = 'jpg'; // 如果是 .JPG 就改成 JPG，如果是 .jpeg 就改 jpeg
+        // ------------------------------
+
+        for (let i = 1; i <= totalPhotos; i++) {
+            const a = document.createElement('a');
+            // 這裡對應 Windows 自動命名的格式：fangliao (1).jpg
+            const imgSrc = `${fileNamePrefix} (${i}).${fileExtension}`;
+            
+            a.href = imgSrc;
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.loading = "lazy"; // 讓 100 張照片不會一次載入，手機才不會卡死
+            
+            a.appendChild(img);
+            gallery.appendChild(a);
+        }
+
+        window.addEventListener('load', function() {
+            baguetteBox.run('.gallery', {
+                animation: 'fadeIn', // 放大時的動畫
+                noScrollbars: true
+            });
+        });
+    </script>
+</body>
+</html>
