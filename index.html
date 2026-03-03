@@ -3,79 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>枋寮回憶錄：無限宇宙</title>
+    <title>枋寮回憶：極簡無限星空 4.6</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500&family=Noto+Serif+TC:wght@500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.css">
     
     <style>
         :root { 
-            --bg-1: #080a15; --bg-2: #180812; --bg-3: #081810; --bg-4: #151208;
+            --bg-1: #080a15; --bg-2: #120818; 
             --card-radius: 20px; 
         }
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: linear-gradient(45deg, var(--bg-1), var(--bg-2), var(--bg-3), var(--bg-4));
+            background: linear-gradient(45deg, var(--bg-1), var(--bg-2));
             background-size: 300% 300%; animation: gradientBG 10s ease infinite;
             overflow: hidden; font-family: 'Inter', sans-serif;
+            /* 禁止手機長按彈出系統選單 */
+            -webkit-touch-callout: none; 
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        #universe { position: absolute; width: 100%; height: 100%; z-index: 1; perspective: 1200px; }
+        #universe { position: absolute; width: 100%; height: 100%; z-index: 1; perspective: 1500px; }
 
-        /* 卡片結構 */
-        .photo-card { position: absolute; width: 230px; height: 230px; opacity: 0; will-change: transform; cursor: pointer; }
+        .photo-card { 
+            position: absolute; width: 230px; height: 230px; opacity: 0; 
+            will-change: transform; cursor: pointer;
+            /* 讓瀏覽器預先分配記憶體，拖曳更順 */
+            backface-visibility: hidden; 
+        }
         .photo-card.reveal { opacity: 1; transition: opacity 2s ease; }
         
+        /* --- 優化 1：預覽模式濾鏡 (降低對比與亮度，增加氛圍並省效能) --- */
         .card-front-thumb { 
             width: 100%; height: 100%; object-fit: cover; border-radius: var(--card-radius); 
-            box-shadow: 0 15px 45px rgba(0,0,0,0.6); border: 0.5px solid rgba(255,255,255,0.1); 
-            transition: transform 0.4s ease; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            border: 0.5px solid rgba(255,255,255,0.1); 
+            /* 預設：低亮度、低對比、微模糊 (營造溫馨感) */
+            filter: brightness(0.7) contrast(0.9) saturate(0.8);
+            transition: all 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
-        .photo-card:hover .card-front-thumb { transform: scale(1.05); border-color: rgba(255,255,255,0.4); }
 
-        /* 其餘 UI 樣式 (承襲 4.2 版) */
+        /* 只有滑鼠滑過或點開時才變清晰 */
+        .photo-card:hover .card-front-thumb { 
+            filter: brightness(1) contrast(1.1) saturate(1);
+            transform: scale(1.05); 
+            border-color: rgba(255,255,255,0.5); 
+        }
+
+        /* --- 其餘介面樣式 --- */
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: 1.5s; }
         #start-overlay.fade-out { opacity: 0; visibility: hidden; }
         #start-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 18px 50px; border-radius: 40px; letter-spacing: 5px; cursor: pointer; backdrop-filter: blur(10px); }
-        .header { position: fixed; top: 40px; width: 100%; text-align: center; color: white; z-index: 100; pointer-events: none; opacity: 0; transition: 3s; }
-        .header.reveal { opacity: 0.8; }
-        #cursor-glow { position: fixed; top: 0; left: 0; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; pointer-events: none; z-index: 0; transform: translate(-50%, -50%); }
+        .header { position: fixed; top: 40px; width: 100%; text-align: center; color: white; z-index: 100; pointer-events: none; opacity: 0.8; }
+        #cursor-glow { position: fixed; top: 0; left: 0; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; pointer-events: none; z-index: 0; transform: translate(-50%, -50%); }
         @keyframes gradientBG { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 
-        /* --- 【沈浸式大圖彩蛋專屬 CSS】 --- */
+        /* --- 彩蛋覆蓋層優化 --- */
         #secret-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9); z-index: 10000;
+            background: rgba(0,0,0,0.92); z-index: 10000;
             display: flex; justify-content: center; align-items: center;
-            opacity: 0; visibility: hidden; transition: 0.5s; perspective: 1500px;
+            opacity: 0; visibility: hidden; transition: 0.5s;
         }
         #secret-overlay.open { opacity: 1; visibility: visible; }
-        
-        /* 叉叉按鈕 */
-        .close-secret { position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; cursor: pointer; font-weight: 300; }
-
-        /* 大圖卡片結構 */
-        .secret-card-container { width: 90%; max-width: 400px; aspect-ratio: 1/1; cursor: pointer; transform-style: preserve-3d; }
+        .close-secret { position: absolute; top: 25px; right: 25px; color: white; font-size: 2.5rem; cursor: pointer; }
+        .secret-card-container { width: 85%; max-width: 400px; aspect-ratio: 1/1; transform-style: preserve-3d; }
         .secret-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
         .secret-card-container.flipped .secret-card-inner { transform: rotateY(180deg); }
-
-        .secret-front, .secret-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--card-radius); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+        .secret-front, .secret-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--card-radius); }
         .secret-front img { width: 100%; height: 100%; object-fit: cover; }
+        .secret-back { background: #fffdf5; transform: rotateY(180deg); display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 30px; box-sizing: border-box; color: #3d2b1f; text-align: center; }
+        .secret-back p { font-family: 'Noto Serif TC', serif; font-size: 1.1rem; line-height: 1.8; margin: 0; }
+        .secret-hint { position: absolute; bottom: 20px; width: 100%; text-align: center; color: white; font-size: 0.8rem; opacity: 0.6; }
 
-        /* 彩蛋提示 */
-        .secret-hint { position: absolute; bottom: 15px; width: 100%; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.8rem; letter-spacing: 2px; }
-
-        /* 背面設計 */
-        .secret-back {
-            background: #fffdf5; transform: rotateY(180deg);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 30px; box-sizing: border-box; color: #3d2b1f; text-align: center;
-        }
-        .secret-back p { font-family: 'Noto Serif TC', serif; font-size: 1.05rem; line-height: 1.9; margin: 0; word-break: break-all; }
-        .secret-signature { margin-top: 20px; font-size: 0.8rem; color: #8d6e63; opacity: 0.9; }
-
-        /* --- 【baguetteBox 修復：刪除上一張下一張按鈕】 --- */
+        /* 移除 baguetteBox 箭頭 */
         #previous-button, #next-button { display: none !important; }
     </style>
 </head>
@@ -89,11 +92,11 @@
         <div class="secret-card-inner">
             <div class="secret-front">
                 <img src="fangliao (16).jpg">
-                <div class="secret-hint">✨ 長按或雙擊翻轉</div>
+                <div class="secret-hint">✨ 長按或雙擊翻轉卡片</div>
             </div>
             <div class="secret-back">
                 <p>嘿嘿被你們發現了！<br>營隊結束了，<br>希望你們還記得我們。<br>台北等你們喔！！</p>
-                <div class="secret-signature">By: 小毅 (這個網頁是我做的喔!)</div>
+                <div style="margin-top:20px; font-size:0.8rem; color:#8d6e63;">By: 小毅 (這個網頁是我做的喔!)</div>
             </div>
         </div>
     </div>
@@ -110,13 +113,9 @@
     const bgm = document.getElementById('bgm');
     const startBtn = document.getElementById('start-btn');
     const overlay = document.getElementById('start-overlay');
-    const header = document.getElementById('header');
     const glow = document.getElementById('cursor-glow');
-
-    // 彩蛋相關
     const secretOverlay = document.getElementById('secret-overlay');
     const secretCard = document.getElementById('secret-card');
-    const closeSecretBtn = document.getElementById('close-secret-btn');
 
     const totalPhotos = 100;
     const cellSize = 380; 
@@ -124,87 +123,46 @@
     const worldHeight = 10 * cellSize;
     const photos = [];
 
-    // --- 產生宇宙中的星星照片 ---
+    // 初始化星星
     for (let i = 1; i <= totalPhotos; i++) {
-        // 如果是第 16 張，我們不用 a 標籤包裹，以免觸發 baguetteBox
+        const card = document.createElement(i === 16 ? 'div' : 'a');
+        card.className = 'photo-card';
+        if (i !== 16) card.href = `fangliao (${i}).jpg`;
+        
+        const img = document.createElement('img');
+        img.src = `fangliao (${i}).jpg`;
+        img.className = 'card-front-thumb';
+        img.loading = "lazy";
+        
+        card.appendChild(img);
+        universe.appendChild(card);
+        
+        const x = ((i - 1) % 10) * cellSize + (Math.random()-0.5)*80;
+        const y = Math.floor((i - 1) / 10) * cellSize + (Math.random()-0.5)*80;
+        photos.push({ element: card, x, y });
+
         if (i === 16) {
-            const card = document.createElement('div');
-            card.className = 'photo-card xiao-yi-secret'; // 加上一個專屬類名
-            const img = document.createElement('img');
-            img.src = `fangliao (${i}).jpg`;
-            img.loading = "lazy";
-            img.className = 'card-front-thumb';
-            card.appendChild(img);
-            
-            // 第 16 張的點擊邏輯：開啟專屬大圖覆蓋層
             card.addEventListener('click', () => {
                 secretOverlay.classList.add('open');
-                secretCard.classList.remove('flipped'); // 每次打開保證是正面
+                secretCard.classList.remove('flipped');
             });
-            
-            universe.appendChild(card);
-            
-            const x = ((i - 1) % 10) * cellSize + (Math.random()-0.5)*80;
-            const y = Math.floor((i - 1) / 10) * cellSize + (Math.random()-0.5)*80;
-            photos.push({ element: card, x, y });
-
-        } else {
-            // 其餘照片維持 baguetteBox 邏輯
-            const a = document.createElement('a');
-            a.href = `fangliao (${i}).jpg`;
-            a.className = 'photo-card';
-            const img = document.createElement('img');
-            img.src = `fangliao (${i}).jpg`;
-            img.loading = "lazy";
-            img.className = 'card-front-thumb';
-            a.appendChild(img);
-            universe.appendChild(a);
-            
-            const x = ((i - 1) % 10) * cellSize + (Math.random()-0.5)*80;
-            const y = Math.floor((i - 1) / 10) * cellSize + (Math.random()-0.5)*80;
-            photos.push({ element: a, x, y });
         }
     }
 
-    // --- 彩蛋覆蓋層內的操作邏輯 ---
-    // 1. 叉叉按鈕關閉
-    closeSecretBtn.addEventListener('click', () => secretOverlay.classList.remove('open'));
-    // 2. 點擊覆蓋層空白處關閉
-    secretOverlay.addEventListener('click', (e) => {
-        if (e.target === secretOverlay) secretOverlay.classList.remove('open');
-    });
-
-    // 3. 處理翻轉：相容手機與電腦 (長按或雙擊)
-    let touchStartTime = 0;
-    let clickCount = 0;
-    let clickTimer = null;
-
-    function toggleFlip(e) {
-        e.stopPropagation();
-        secretCard.classList.toggle('flipped');
-    }
-
-    // 觸控長按偵測
+    // 彩蛋翻轉邏輯：相容手機與電腦
+    let pressTimer;
     secretCard.addEventListener('touchstart', (e) => {
-        touchStartTime = Date.now();
-        if (e.touches.length > 1) return; // 忽略多指
+        e.preventDefault(); // 關鍵：阻止手機預設選單
+        pressTimer = window.setTimeout(() => secretCard.classList.toggle('flipped'), 500);
     });
-    secretCard.addEventListener('touchend', (e) => {
-        const touchEndTime = Date.now();
-        const duration = touchEndTime - touchStartTime;
-        if (duration > 500) { // 長按超過 0.5 秒
-            toggleFlip(e);
-        }
-    });
+    secretCard.addEventListener('touchend', () => clearTimeout(pressTimer));
+    secretCard.addEventListener('dblclick', () => secretCard.classList.toggle('flipped'));
+    document.getElementById('close-secret-btn').onclick = () => secretOverlay.classList.remove('open');
 
-    // 電腦雙擊偵測
-    secretCard.addEventListener('dblclick', toggleFlip);
-
-    // --- 其餘核心邏輯 (承襲 4.2 版) ---
+    // 啟動與循環渲染
     startBtn.addEventListener('click', () => {
         bgm.playbackRate = 0.85; bgm.play();
         overlay.classList.add('fade-out');
-        header.classList.add('reveal');
         photos.forEach((p, index) => setTimeout(() => p.element.classList.add('reveal'), index * 10));
     });
 
@@ -227,11 +185,11 @@
     }
     render();
 
-    const start = e => { if(e.target.className !== 'card-front-thumb') { isDragging = true; lastX = e.pageX || e.touches[0].pageX; lastY = e.pageY || e.touches[0].pageY; }};
+    // 拖曳控制
+    const start = e => { if(e.target.tagName !== 'IMG') { isDragging = true; lastX = e.pageX || e.touches[0].pageX; lastY = e.pageY || e.touches[0].pageY; }};
     const move = e => { if(!isDragging) return; const x = e.pageX || e.touches[0].pageX, y = e.pageY || e.touches[0].pageY; const dx = x - lastX, dy = y - lastY; viewX += dx; viewY += dy; velX = dx; velY = dy; lastX = x; lastY = y; };
     window.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('touchstart', start, {passive: false}); window.addEventListener('touchmove', move, {passive: false}); window.addEventListener('touchend', () => isDragging = false);
-    // 啟動 baguetteBox
     window.addEventListener('load', () => baguetteBox.run('#universe'));
 </script>
 </body>
