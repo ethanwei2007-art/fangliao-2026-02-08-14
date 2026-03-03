@@ -23,55 +23,82 @@
 
         #universe { position: absolute; width: 100%; height: 100%; z-index: 1; perspective: 1200px; }
 
-        /* --- 卡片結構 --- */
-        .photo-card { position: absolute; width: 230px; height: 230px; opacity: 0; transform-style: preserve-3d; }
+        /* 卡片結構 */
+        .photo-card { position: absolute; width: 230px; height: 230px; opacity: 0; will-change: transform; cursor: pointer; }
         .photo-card.reveal { opacity: 1; transition: opacity 2s ease; }
         
-        .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
-        .photo-card.flipped .card-inner { transform: rotateY(180deg); }
-
-        .card-front, .card-back { 
-            position: absolute; width: 100%; height: 100%; 
-            backface-visibility: hidden; border-radius: var(--card-radius); 
-            overflow: hidden; box-shadow: 0 15px 45px rgba(0,0,0,0.6);
-            border: 0.5px solid rgba(255,255,255,0.1);
+        .card-front-thumb { 
+            width: 100%; height: 100%; object-fit: cover; border-radius: var(--card-radius); 
+            box-shadow: 0 15px 45px rgba(0,0,0,0.6); border: 0.5px solid rgba(255,255,255,0.1); 
+            transition: transform 0.4s ease; 
         }
+        .photo-card:hover .card-front-thumb { transform: scale(1.05); border-color: rgba(255,255,255,0.4); }
 
-        .card-front img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* --- 彩蛋提示 (隱藏在 Hover 中) --- */
-        .hint-text {
-            position: absolute; bottom: 10px; width: 100%; text-align: center;
-            color: rgba(255,255,255,0.8); font-size: 0.7rem; letter-spacing: 2px;
-            opacity: 0; transition: 0.5s; pointer-events: none;
-        }
-        .special-star:hover .hint-text { opacity: 1; }
-
-        /* --- 卡片背面設計 --- */
-        .card-back {
-            background: #fffdf5; transform: rotateY(180deg);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            padding: 25px; box-sizing: border-box; color: #3d2b1f; text-align: center;
-        }
-        .card-back p { 
-            font-family: 'Noto Serif TC', serif; font-size: 0.95rem; 
-            line-height: 1.8; margin: 0; word-break: break-all;
-        }
-        .back-sig { margin-top: 15px; font-size: 0.75rem; color: #8d6e63; opacity: 0.8; }
-
-        /* UI 層與啟動層 (承襲 4.2 版) */
+        /* 其餘 UI 樣式 (承襲 4.2 版) */
         #start-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 9999; display: flex; justify-content: center; align-items: center; transition: 1.5s; }
         #start-overlay.fade-out { opacity: 0; visibility: hidden; }
         #start-btn { background: none; border: 1px solid rgba(255,255,255,0.3); color: white; padding: 18px 50px; border-radius: 40px; letter-spacing: 5px; cursor: pointer; backdrop-filter: blur(10px); }
         .header { position: fixed; top: 40px; width: 100%; text-align: center; color: white; z-index: 100; pointer-events: none; opacity: 0; transition: 3s; }
         .header.reveal { opacity: 0.8; }
-        @keyframes gradientBG { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
         #cursor-glow { position: fixed; top: 0; left: 0; width: 600px; height: 600px; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; pointer-events: none; z-index: 0; transform: translate(-50%, -50%); }
+        @keyframes gradientBG { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+
+        /* --- 【沈浸式大圖彩蛋專屬 CSS】 --- */
+        #secret-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 10000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; visibility: hidden; transition: 0.5s; perspective: 1500px;
+        }
+        #secret-overlay.open { opacity: 1; visibility: visible; }
+        
+        /* 叉叉按鈕 */
+        .close-secret { position: absolute; top: 20px; right: 20px; color: white; font-size: 2rem; cursor: pointer; font-weight: 300; }
+
+        /* 大圖卡片結構 */
+        .secret-card-container { width: 90%; max-width: 400px; aspect-ratio: 1/1; cursor: pointer; transform-style: preserve-3d; }
+        .secret-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1); transform-style: preserve-3d; }
+        .secret-card-container.flipped .secret-card-inner { transform: rotateY(180deg); }
+
+        .secret-front, .secret-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: var(--card-radius); overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8); }
+        .secret-front img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* 彩蛋提示 */
+        .secret-hint { position: absolute; bottom: 15px; width: 100%; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.8rem; letter-spacing: 2px; }
+
+        /* 背面設計 */
+        .secret-back {
+            background: #fffdf5; transform: rotateY(180deg);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            padding: 30px; box-sizing: border-box; color: #3d2b1f; text-align: center;
+        }
+        .secret-back p { font-family: 'Noto Serif TC', serif; font-size: 1.05rem; line-height: 1.9; margin: 0; word-break: break-all; }
+        .secret-signature { margin-top: 20px; font-size: 0.8rem; color: #8d6e63; opacity: 0.9; }
+
+        /* --- 【baguetteBox 修復：刪除上一張下一張按鈕】 --- */
+        #previous-button, #next-button { display: none !important; }
     </style>
 </head>
 <body>
 
 <div id="start-overlay"><button id="start-btn">進入枋寮回憶星空</button></div>
+
+<div id="secret-overlay">
+    <div class="close-secret" id="close-secret-btn">&times;</div>
+    <div class="secret-card-container" id="secret-card">
+        <div class="secret-card-inner">
+            <div class="secret-front">
+                <img src="fangliao (16).jpg">
+                <div class="secret-hint">✨ 長按或雙擊翻轉</div>
+            </div>
+            <div class="secret-back">
+                <p>嘿嘿被你們發現了！<br>營隊結束了，<br>希望你們還記得我們。<br>台北等你們喔！！</p>
+                <div class="secret-signature">By: 小毅 (這個網頁是我做的喔!)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="cursor-glow"></div>
 <div class="header" id="header"><h1>枋寮志工活動錄</h1></div>
 <audio id="bgm" src="music.mp3" loop></audio>
@@ -86,77 +113,101 @@
     const header = document.getElementById('header');
     const glow = document.getElementById('cursor-glow');
 
+    // 彩蛋相關
+    const secretOverlay = document.getElementById('secret-overlay');
+    const secretCard = document.getElementById('secret-card');
+    const closeSecretBtn = document.getElementById('close-secret-btn');
+
     const totalPhotos = 100;
     const cellSize = 380; 
     const worldWidth = 10 * cellSize;
     const worldHeight = 10 * cellSize;
     const photos = [];
 
-    // --- 產生照片與隱藏彩蛋 ---
+    // --- 產生宇宙中的星星照片 ---
     for (let i = 1; i <= totalPhotos; i++) {
-        const card = document.createElement('div');
-        card.className = i === 16 ? 'photo-card special-star' : 'photo-card';
-        
-        const inner = document.createElement('div');
-        inner.className = 'card-inner';
-
-        // 正面：包含照片連結
-        const front = document.createElement('div');
-        front.className = 'card-front';
-        const a = document.createElement('a');
-        a.href = `fangliao (${i}).jpg`;
-        const img = document.createElement('img');
-        img.src = `fangliao (${i}).jpg`;
-        img.loading = "lazy";
-        
-        a.appendChild(img);
-        front.appendChild(a);
-
-        // 如果是第 16 張，加入微弱提示
+        // 如果是第 16 張，我們不用 a 標籤包裹，以免觸發 baguetteBox
         if (i === 16) {
-            const hint = document.createElement('div');
-            hint.className = 'hint-text';
-            hint.innerText = "✨ 點擊邊緣翻轉";
-            front.appendChild(hint);
+            const card = document.createElement('div');
+            card.className = 'photo-card xiao-yi-secret'; // 加上一個專屬類名
+            const img = document.createElement('img');
+            img.src = `fangliao (${i}).jpg`;
+            img.loading = "lazy";
+            img.className = 'card-front-thumb';
+            card.appendChild(img);
+            
+            // 第 16 張的點擊邏輯：開啟專屬大圖覆蓋層
+            card.addEventListener('click', () => {
+                secretOverlay.classList.add('open');
+                secretCard.classList.remove('flipped'); // 每次打開保證是正面
+            });
+            
+            universe.appendChild(card);
+            
+            const x = ((i - 1) % 10) * cellSize + (Math.random()-0.5)*80;
+            const y = Math.floor((i - 1) / 10) * cellSize + (Math.random()-0.5)*80;
+            photos.push({ element: card, x, y });
+
+        } else {
+            // 其餘照片維持 baguetteBox 邏輯
+            const a = document.createElement('a');
+            a.href = `fangliao (${i}).jpg`;
+            a.className = 'photo-card';
+            const img = document.createElement('img');
+            img.src = `fangliao (${i}).jpg`;
+            img.loading = "lazy";
+            img.className = 'card-front-thumb';
+            a.appendChild(img);
+            universe.appendChild(a);
+            
+            const x = ((i - 1) % 10) * cellSize + (Math.random()-0.5)*80;
+            const y = Math.floor((i - 1) / 10) * cellSize + (Math.random()-0.5)*80;
+            photos.push({ element: a, x, y });
         }
-
-        inner.appendChild(front);
-
-        // 第 16 張的背面：放上你的專屬文字
-        if (i === 16) {
-            const back = document.createElement('div');
-            back.className = 'card-back';
-            back.innerHTML = `
-                <p>嘿嘿被你們發現了！<br>營隊結束了，<br>希望你們還記得我們。<br>台北等你們喔！！</p>
-                <div class="back-sig">By: 小毅 (這個網頁是我做的喔!)</div>
-            `;
-            inner.appendChild(back);
-
-            // 點擊卡片邊緣觸發翻轉，點擊中間依然是開大圖
-            card.onclick = (e) => {
-                if (e.target.tagName !== 'A' && e.target.tagName !== 'IMG') {
-                    card.classList.toggle('flipped');
-                }
-            };
-        }
-
-        card.appendChild(inner);
-        universe.appendChild(card);
-        
-        const x = ((i - 1) % 10) * cellSize + (Math.random()-0.5)*80;
-        const y = Math.floor((i - 1) / 10) * cellSize + (Math.random()-0.5)*80;
-        photos.push({ element: card, x, y });
     }
 
-    // 啟動邏輯
+    // --- 彩蛋覆蓋層內的操作邏輯 ---
+    // 1. 叉叉按鈕關閉
+    closeSecretBtn.addEventListener('click', () => secretOverlay.classList.remove('open'));
+    // 2. 點擊覆蓋層空白處關閉
+    secretOverlay.addEventListener('click', (e) => {
+        if (e.target === secretOverlay) secretOverlay.classList.remove('open');
+    });
+
+    // 3. 處理翻轉：相容手機與電腦 (長按或雙擊)
+    let touchStartTime = 0;
+    let clickCount = 0;
+    let clickTimer = null;
+
+    function toggleFlip(e) {
+        e.stopPropagation();
+        secretCard.classList.toggle('flipped');
+    }
+
+    // 觸控長按偵測
+    secretCard.addEventListener('touchstart', (e) => {
+        touchStartTime = Date.now();
+        if (e.touches.length > 1) return; // 忽略多指
+    });
+    secretCard.addEventListener('touchend', (e) => {
+        const touchEndTime = Date.now();
+        const duration = touchEndTime - touchStartTime;
+        if (duration > 500) { // 長按超過 0.5 秒
+            toggleFlip(e);
+        }
+    });
+
+    // 電腦雙擊偵測
+    secretCard.addEventListener('dblclick', toggleFlip);
+
+    // --- 其餘核心邏輯 (承襲 4.2 版) ---
     startBtn.addEventListener('click', () => {
         bgm.playbackRate = 0.85; bgm.play();
         overlay.classList.add('fade-out');
         header.classList.add('reveal');
-        photos.forEach((p, index) => setTimeout(() => p.element.classList.add('reveal'), index * 12));
+        photos.forEach((p, index) => setTimeout(() => p.element.classList.add('reveal'), index * 10));
     });
 
-    // 互動控制與渲染 (承襲 4.2 版)
     window.addEventListener('mousemove', (e) => {
         glow.style.left = e.clientX + 'px';
         glow.style.top = e.clientY + 'px';
@@ -176,10 +227,11 @@
     }
     render();
 
-    const start = e => { if(e.target.tagName !== 'IMG' && e.target.tagName !== 'A') { isDragging = true; lastX = e.pageX || e.touches[0].pageX; lastY = e.pageY || e.touches[0].pageY; }};
+    const start = e => { if(e.target.className !== 'card-front-thumb') { isDragging = true; lastX = e.pageX || e.touches[0].pageX; lastY = e.pageY || e.touches[0].pageY; }};
     const move = e => { if(!isDragging) return; const x = e.pageX || e.touches[0].pageX, y = e.pageY || e.touches[0].pageY; const dx = x - lastX, dy = y - lastY; viewX += dx; viewY += dy; velX = dx; velY = dy; lastX = x; lastY = y; };
     window.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('touchstart', start, {passive: false}); window.addEventListener('touchmove', move, {passive: false}); window.addEventListener('touchend', () => isDragging = false);
+    // 啟動 baguetteBox
     window.addEventListener('load', () => baguetteBox.run('#universe'));
 </script>
 </body>
