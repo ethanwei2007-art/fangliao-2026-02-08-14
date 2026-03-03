@@ -3,58 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>枋寮回憶：無限星空</title>
+    <title>枋寮回憶：極簡無限星空 3.4</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.css">
     
     <style>
-        :root { --bg-color: #050505; --card-radius: 20px; }
+        :root { --bg-color: #08080a; --card-radius: 16px; }
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
             background: var(--bg-color); overflow: hidden; 
-            font-family: 'Inter', -apple-system, sans-serif;
-            touch-action: none;
+            font-family: 'Inter', sans-serif; touch-action: none;
         }
 
-        /* 宇宙容器 */
-        #universe { position: absolute; width: 100%; height: 100%; will-change: transform; }
+        #universe { position: absolute; width: 100%; height: 100%; }
 
-        /* 照片卡片基礎樣式 */
         .photo-card {
-            position: absolute; width: 220px; height: 220px;
-            /* 初始狀態：縮小且透明，準備做開場動畫 */
-            opacity: 0; transform: translate(-50%, -50%) scale(0.5);
-            transition: opacity 1s ease-out, transform 1s cubic-bezier(0.2, 0.8, 0.2, 1.1);
+            position: absolute; width: 240px; height: 240px;
+            /* 移除這裡的 transition 以免造成循環時的飛越殘影 */
+            will-change: transform;
+            opacity: 0; /* 初始透明供開場動畫使用 */
         }
 
-        /* 開場後的狀態 */
-        .photo-card.reveal { opacity: 1; }
+        /* 只有開場跟消失時需要淡入感 */
+        .photo-card.reveal { opacity: 1; transition: opacity 1.5s ease; }
 
         .photo-card img {
             width: 100%; height: 100%; object-fit: cover;
             border-radius: var(--card-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            border: 0.5px solid rgba(255,255,255,0.15);
-            transition: transform 0.4s ease;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.1);
+            /* 縮放動畫只留在圖片本身 */
+            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
 
-        .photo-card:hover img { transform: scale(1.05); border-color: rgba(255,255,255,0.5); }
+        /* Apple 風格懸停：微微浮起 */
+        .photo-card:hover img { 
+            transform: scale(1.06); 
+            border-color: rgba(255,255,255,0.4);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+        }
 
-        /* UI 元素 */
         .header {
             position: fixed; top: 40px; width: 100%; text-align: center;
             color: white; z-index: 100; pointer-events: none;
         }
-        .header h1 { font-weight: 300; letter-spacing: 5px; opacity: 0; transition: 2s; }
-        .header.reveal h1 { opacity: 1; }
+        .header h1 { font-weight: 300; letter-spacing: 6px; opacity: 0; transform: translateY(10px); transition: 2s; }
+        .header.reveal h1 { opacity: 0.8; transform: translateY(0); }
     </style>
 </head>
 <body>
 
 <div class="header" id="header">
-    <h1>枋寮回憶錄</h1>
+    <h1>枋寮志工活動錄</h1>
 </div>
 
 <div id="universe"></div>
@@ -63,20 +65,26 @@
 <script>
     const universe = document.getElementById('universe');
     const totalPhotos = 100;
-    const cellSize = 550; 
-    const worldWidth = 10 * cellSize;
-    const worldHeight = 10 * cellSize;
+
+    // --- 密度設定 ---
+    const cellSize = 380; // 縮小間距（原本 550），讓照片更密集
+    const cols = 10;
+    const rows = 10;
+    const worldWidth = cols * cellSize;
+    const worldHeight = rows * cellSize;
     const photos = [];
 
-    // 1. 產生照片
+    // 1. 初始化照片
     for (let i = 1; i <= totalPhotos; i++) {
         const a = document.createElement('a');
         a.href = `fangliao (${i}).jpg`;
         a.className = 'photo-card';
         
-        // 隨機初始位置
-        const x = (i % 10) * cellSize + (Math.random()-0.5)*200;
-        const y = Math.floor(i / 10) * cellSize + (Math.random()-0.5)*200;
+        // 擾動網格：在 380px 的格子內隨機偏移，確保不重疊
+        const baseX = ((i - 1) % cols) * cellSize;
+        const baseY = Math.floor((i - 1) / cols) * cellSize;
+        const x = baseX + (Math.random() - 0.5) * 80;
+        const y = baseY + (Math.random() - 0.5) * 80;
 
         const img = document.createElement('img');
         img.src = `fangliao (${i}).jpg`;
@@ -87,45 +95,72 @@
         photos.push({ element: a, x, y });
     }
 
-    // 2. 無限循環滾動邏輯
+    // 2. 物理與循環邏輯
     let viewX = 0, viewY = 0, velX = 0, velY = 0, isDragging = false;
     let lastX, lastY;
 
     function render() {
-        if (!isDragging) { viewX += velX; viewY += velY; velX *= 0.95; velY *= 0.95; }
+        if (!isDragging) {
+            viewX += velX; viewY += velY;
+            velX *= 0.95; velY *= 0.95;
+        }
+
+        const winW = window.innerWidth;
+        const winH = window.innerHeight;
+
         photos.forEach(p => {
-            let dx = (p.x + viewX) % worldWidth;
-            let dy = (p.y + viewY) % worldHeight;
-            if (dx < 0) dx += worldWidth; if (dy < 0) dy += worldHeight;
-            // 只有在已經「揭曉」後才套用位移 transform
-            if (p.element.classList.contains('reveal')) {
-                p.element.style.transform = `translate3d(${dx - 220}px, ${dy - 220}px, 0)`;
-            }
+            // 無限循環計算
+            let screenX = (p.x + viewX) % worldWidth;
+            let screenY = (p.y + viewY) % worldHeight;
+            if (screenX < 0) screenX += worldWidth;
+            if (screenY < 0) screenY += worldHeight;
+
+            // 讓坐標以螢幕中心擴散
+            p.element.style.transform = `translate3d(${screenX - (worldWidth/2) + (winW/2)}px, ${screenY - (worldHeight/2) + (winH/2)}px, 0)`;
         });
         requestAnimationFrame(render);
     }
     render();
 
-    // 3. 【開場動畫控制】
+    // 3. 開場動畫：從中心擴散飛出
     window.addEventListener('load', () => {
         document.getElementById('header').classList.add('reveal');
+        // 初始化時先隨機給點速度，讓它動起來
+        velX = 1; velY = 0.5;
+        
         photos.forEach((p, index) => {
-            // 每張照片稍微延遲一點點，創造「噴發」感
             setTimeout(() => {
                 p.element.classList.add('reveal');
-            }, index * 20); 
+            }, index * 15);
         });
         baguetteBox.run('#universe');
     });
 
-    // 4. 互動事件 (省略部分重複邏輯以求簡潔，功能維持 3.2 版)
-    window.addEventListener('mousedown', e => { if(e.target.tagName !== 'IMG') { isDragging = true; lastX = e.pageX; lastY = e.pageY; }});
-    window.addEventListener('mousemove', e => {
+    // 4. 互動事件
+    const startDrag = (e) => {
+        if(e.target.tagName === 'IMG') return;
+        isDragging = true;
+        lastX = e.pageX || e.touches[0].pageX;
+        lastY = e.pageY || e.touches[0].pageY;
+    };
+
+    const moveDrag = (e) => {
         if (!isDragging) return;
-        const dx = e.pageX - lastX; const dy = e.pageY - lastY;
-        viewX += dx; viewY += dy; velX = dx; velY = dy; lastX = e.pageX; lastY = e.pageY;
-    });
+        const x = e.pageX || e.touches[0].pageX;
+        const y = e.pageY || e.touches[0].pageY;
+        const dx = x - lastX;
+        const dy = y - lastY;
+        viewX += dx; viewY += dy;
+        velX = dx; velY = dy;
+        lastX = x; lastY = y;
+    };
+
+    window.addEventListener('mousedown', startDrag);
+    window.addEventListener('mousemove', moveDrag);
     window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('touchstart', startDrag);
+    window.addEventListener('touchmove', moveDrag);
+    window.addEventListener('touchend', () => isDragging = false);
 </script>
 </body>
 </html>
