@@ -3,134 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>枋寮回憶：音畫無限星空</title>
+    <title>枋寮回憶：沈浸式星空</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.css">
     
     <style>
-        :root { 
-            --bg-color-1: #0a0a12;
-            --bg-color-2: #140d1a;
-            --bg-color-3: #0d1a1a;
-            --card-radius: 18px; 
-        }
+        :root { --bg-color-1: #0a0a12; --bg-color-2: #140d1a; --card-radius: 20px; }
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            /* 背景動態漸變 */
-            background: linear-gradient(135deg, var(--bg-color-1), var(--bg-color-2), var(--bg-color-3));
-            background-size: 400% 400%;
-            animation: gradientBG 20s ease infinite;
-            overflow: hidden; 
-            font-family: 'Inter', sans-serif; touch-action: none;
+            background: linear-gradient(135deg, var(--bg-color-1), var(--bg-color-2));
+            background-size: 400% 400%; animation: gradientBG 20s ease infinite;
+            overflow: hidden; font-family: 'Inter', sans-serif;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        /* --- 啟動開場層 (Apple Style) --- */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #050505; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 2s cubic-bezier(0.4, 0, 0.2, 1), visibility 2s;
         }
+        #start-overlay.fade-out { opacity: 0; visibility: hidden; }
+        
+        #start-btn {
+            background: none; border: 1px solid rgba(255,255,255,0.4);
+            color: white; padding: 15px 40px; border-radius: 40px;
+            font-size: 0.9rem; letter-spacing: 4px; cursor: pointer;
+            transition: all 0.5s; backdrop-filter: blur(10px);
+        }
+        #start-btn:hover { background: white; color: black; border-color: white; transform: scale(1.05); }
 
-        /* 滑鼠互動背光 */
+        /* 其餘樣式承襲 4.0 版 */
         #cursor-glow {
             position: fixed; top: 0; left: 0; width: 600px; height: 600px;
             background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%);
-            border-radius: 50%; pointer-events: none; z-index: 0;
-            transform: translate(-50%, -50%);
-            will-change: left, top;
+            border-radius: 50%; pointer-events: none; z-index: 0; transform: translate(-50%, -50%);
         }
-
         #universe { position: absolute; width: 100%; height: 100%; z-index: 1; }
-
-        .photo-card {
-            position: absolute; width: 230px; height: 230px; will-change: transform; opacity: 0;
-        }
-        .photo-card.reveal { opacity: 1; transition: opacity 2s ease; }
-
-        .photo-card img {
-            width: 100%; height: 100%; object-fit: cover;
-            border-radius: var(--card-radius);
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            border: 0.5px solid rgba(255,255,255,0.1);
-            transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-        }
-        .photo-card:hover img { transform: scale(1.05); border-color: rgba(255,255,255,0.4); }
-
-        /* UI 元件 */
-        .header {
-            position: fixed; top: 40px; width: 100%; text-align: center;
-            color: white; z-index: 100; pointer-events: none;
-        }
-        .header h1 { font-weight: 300; letter-spacing: 6px; opacity: 0.8; }
-
-        /* 音樂控制按鈕 */
-        #music-ctrl {
-            position: fixed; bottom: 40px; left: 40px; z-index: 1000;
-            background: rgba(255,255,255,0.1); border: 0.5px solid rgba(255,255,255,0.3);
-            color: white; padding: 10px 15px; border-radius: 30px;
-            cursor: pointer; font-size: 0.7rem; backdrop-filter: blur(5px);
-            transition: 0.3s;
-        }
-        #music-ctrl:hover { background: rgba(255,255,255,0.2); }
+        .photo-card { position: absolute; width: 230px; height: 230px; will-change: transform; opacity: 0; }
+        .photo-card.reveal { opacity: 1; transition: opacity 2.5s ease; }
+        .photo-card img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--card-radius); box-shadow: 0 10px 40px rgba(0,0,0,0.6); border: 0.5px solid rgba(255,255,255,0.1); transition: transform 0.4s ease; }
+        .header { position: fixed; top: 40px; width: 100%; text-align: center; color: white; z-index: 100; pointer-events: none; opacity: 0; transition: 3s; }
+        .header.reveal { opacity: 0.8; }
+        @keyframes gradientBG { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
     </style>
 </head>
 <body>
 
-<div id="cursor-glow"></div>
-
-<div class="header">
-    <h1>枋寮志工活動錄</h1>
+<div id="start-overlay">
+    <button id="start-btn">進入枋寮回憶星空</button>
 </div>
 
-<button id="music-ctrl">♫ 背景音樂: 關</button>
-
+<div id="cursor-glow"></div>
+<div class="header" id="header"><h1>枋寮志工活動錄</h1></div>
 <audio id="bgm" src="music.mp3" loop></audio>
-
 <div id="universe"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.js"></script>
 <script>
     const universe = document.getElementById('universe');
-    const glow = document.getElementById('cursor-glow');
+    const overlay = document.getElementById('start-overlay');
+    const startBtn = document.getElementById('start-btn');
     const bgm = document.getElementById('bgm');
-    const musicBtn = document.getElementById('music-ctrl');
-    
-    // --- 1. 背景音樂控制 (0.85倍速) ---
-    let isPlaying = false;
-    musicBtn.addEventListener('click', () => {
-        if (!isPlaying) {
-            bgm.playbackRate = 0.85; // 設定放慢倍速
-            bgm.play();
-            musicBtn.innerText = "♫ 背景音樂: 開";
-        } else {
-            bgm.pause();
-            musicBtn.innerText = "♫ 背景音樂: 關";
-        }
-        isPlaying = !isPlaying;
+    const header = document.getElementById('header');
+    const glow = document.getElementById('cursor-glow');
+
+    // --- 啟動儀式 ---
+    startBtn.addEventListener('click', () => {
+        // 1. 播放音樂並設定倍速
+        bgm.playbackRate = 0.85; 
+        bgm.play();
+        
+        // 2. 隱藏開場層
+        overlay.classList.add('fade-out');
+        
+        // 3. 觸發標題與照片動畫
+        header.classList.add('reveal');
+        photos.forEach((p, index) => {
+            setTimeout(() => p.element.classList.add('reveal'), index * 15);
+        });
     });
 
-    // --- 2. 滑鼠追蹤互動 ---
+    // 背景互動
     window.addEventListener('mousemove', (e) => {
         glow.style.left = e.clientX + 'px';
         glow.style.top = e.clientY + 'px';
     });
 
-    // --- 3. 照片牆邏輯 (承襲 3.4 版優化) ---
+    // 照片牆初始化 (維持 3.5 版)
     const totalPhotos = 100;
     const cellSize = 380; 
-    const cols = 10;
-    const rows = 10;
-    const worldWidth = cols * cellSize;
-    const worldHeight = rows * cellSize;
+    const worldWidth = 10 * cellSize;
+    const worldHeight = 10 * cellSize;
     const photos = [];
 
     for (let i = 1; i <= totalPhotos; i++) {
         const a = document.createElement('a');
         a.href = `fangliao (${i}).jpg`;
         a.className = 'photo-card';
-        const x = ((i - 1) % cols) * cellSize + (Math.random()-0.5)*80;
-        const y = Math.floor((i - 1) / cols) * cellSize + (Math.random()-0.5)*80;
+        const x = ((i - 1) % 10) * cellSize + (Math.random()-0.5)*80;
+        const y = Math.floor((i - 1) / 10) * cellSize + (Math.random()-0.5)*80;
         const img = document.createElement('img');
         img.src = `fangliao (${i}).jpg`;
         img.loading = "lazy";
@@ -139,34 +113,26 @@
         photos.push({ element: a, x, y });
     }
 
-    let viewX = 0, viewY = 0, velX = 0, velY = 0, isDragging = false, lastX, lastY;
+    let viewX = 0, viewY = 0, velX = 0.5, velY = 0.3, isDragging = false, lastX, lastY;
 
     function render() {
-        if (!isDragging) { viewX += velX; viewY += velY; velX *= 0.95; velY *= 0.95; }
+        if (!isDragging) { viewX += velX; viewY += velY; velX *= 0.98; velY *= 0.98; }
         const winW = window.innerWidth, winH = window.innerHeight;
         photos.forEach(p => {
-            let screenX = (p.x + viewX) % worldWidth;
-            let screenY = (p.y + viewY) % worldHeight;
-            if (screenX < 0) screenX += worldWidth; if (screenY < 0) screenY += worldHeight;
-            p.element.style.transform = `translate3d(${screenX - (worldWidth/2) + (winW/2)}px, ${screenY - (worldHeight/2) + (winH/2)}px, 0)`;
+            let sx = (p.x + viewX) % worldWidth;
+            let sy = (p.y + viewY) % worldHeight;
+            if (sx < 0) sx += worldWidth; if (sy < 0) sy += worldHeight;
+            p.element.style.transform = `translate3d(${sx - worldWidth/2 + winW/2}px, ${sy - worldHeight/2 + winH/2}px, 0)`;
         });
         requestAnimationFrame(render);
     }
     render();
 
-    window.addEventListener('load', () => {
-        photos.forEach((p, index) => {
-            setTimeout(() => p.element.classList.add('reveal'), index * 10);
-        });
-        baguetteBox.run('#universe');
-    });
-
-    // 拖曳事件 (滑鼠 & 觸控)
     const start = e => { if(e.target.tagName !== 'IMG') { isDragging = true; lastX = e.pageX || e.touches[0].pageX; lastY = e.pageY || e.touches[0].pageY; }};
     const move = e => { if(!isDragging) return; const x = e.pageX || e.touches[0].pageX, y = e.pageY || e.touches[0].pageY; const dx = x - lastX, dy = y - lastY; viewX += dx; viewY += dy; velX = dx; velY = dy; lastX = x; lastY = y; };
     window.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', () => isDragging = false);
     window.addEventListener('touchstart', start); window.addEventListener('touchmove', move); window.addEventListener('touchend', () => isDragging = false);
-
+    window.addEventListener('load', () => baguetteBox.run('#universe'));
 </script>
 </body>
 </html>
