@@ -3,164 +3,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>枋寮回憶：極簡無限星空 3.4</title>
+    <title>枋寮回憶：音畫無限星空</title>
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.css">
     
     <style>
-        :root { --bg-color: #08080a; --card-radius: 16px; }
+        :root { 
+            --bg-color-1: #0a0a12;
+            --bg-color-2: #140d1a;
+            --bg-color-3: #0d1a1a;
+            --card-radius: 18px; 
+        }
 
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: var(--bg-color); overflow: hidden; 
+            /* 背景動態漸變 */
+            background: linear-gradient(135deg, var(--bg-color-1), var(--bg-color-2), var(--bg-color-3));
+            background-size: 400% 400%;
+            animation: gradientBG 20s ease infinite;
+            overflow: hidden; 
             font-family: 'Inter', sans-serif; touch-action: none;
         }
 
-        #universe { position: absolute; width: 100%; height: 100%; }
-
-        .photo-card {
-            position: absolute; width: 240px; height: 240px;
-            /* 移除這裡的 transition 以免造成循環時的飛越殘影 */
-            will-change: transform;
-            opacity: 0; /* 初始透明供開場動畫使用 */
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        /* 只有開場跟消失時需要淡入感 */
-        .photo-card.reveal { opacity: 1; transition: opacity 1.5s ease; }
+        /* 滑鼠互動背光 */
+        #cursor-glow {
+            position: fixed; top: 0; left: 0; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0) 70%);
+            border-radius: 50%; pointer-events: none; z-index: 0;
+            transform: translate(-50%, -50%);
+            will-change: left, top;
+        }
+
+        #universe { position: absolute; width: 100%; height: 100%; z-index: 1; }
+
+        .photo-card {
+            position: absolute; width: 230px; height: 230px; will-change: transform; opacity: 0;
+        }
+        .photo-card.reveal { opacity: 1; transition: opacity 2s ease; }
 
         .photo-card img {
             width: 100%; height: 100%; object-fit: cover;
             border-radius: var(--card-radius);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.1);
-            /* 縮放動畫只留在圖片本身 */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            border: 0.5px solid rgba(255,255,255,0.1);
             transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
+        .photo-card:hover img { transform: scale(1.05); border-color: rgba(255,255,255,0.4); }
 
-        /* Apple 風格懸停：微微浮起 */
-        .photo-card:hover img { 
-            transform: scale(1.06); 
-            border-color: rgba(255,255,255,0.4);
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-        }
-
+        /* UI 元件 */
         .header {
             position: fixed; top: 40px; width: 100%; text-align: center;
             color: white; z-index: 100; pointer-events: none;
         }
-        .header h1 { font-weight: 300; letter-spacing: 6px; opacity: 0; transform: translateY(10px); transition: 2s; }
-        .header.reveal h1 { opacity: 0.8; transform: translateY(0); }
+        .header h1 { font-weight: 300; letter-spacing: 6px; opacity: 0.8; }
+
+        /* 音樂控制按鈕 */
+        #music-ctrl {
+            position: fixed; bottom: 40px; left: 40px; z-index: 1000;
+            background: rgba(255,255,255,0.1); border: 0.5px solid rgba(255,255,255,0.3);
+            color: white; padding: 10px 15px; border-radius: 30px;
+            cursor: pointer; font-size: 0.7rem; backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+        #music-ctrl:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
 
-<div class="header" id="header">
+<div id="cursor-glow"></div>
+
+<div class="header">
     <h1>枋寮志工活動錄</h1>
 </div>
+
+<button id="music-ctrl">♫ 背景音樂: 關</button>
+
+<audio id="bgm" src="music.mp3" loop></audio>
 
 <div id="universe"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/baguettebox.js/1.11.1/baguetteBox.min.js"></script>
 <script>
     const universe = document.getElementById('universe');
-    const totalPhotos = 100;
+    const glow = document.getElementById('cursor-glow');
+    const bgm = document.getElementById('bgm');
+    const musicBtn = document.getElementById('music-ctrl');
+    
+    // --- 1. 背景音樂控制 (0.85倍速) ---
+    let isPlaying = false;
+    musicBtn.addEventListener('click', () => {
+        if (!isPlaying) {
+            bgm.playbackRate = 0.85; // 設定放慢倍速
+            bgm.play();
+            musicBtn.innerText = "♫ 背景音樂: 開";
+        } else {
+            bgm.pause();
+            musicBtn.innerText = "♫ 背景音樂: 關";
+        }
+        isPlaying = !isPlaying;
+    });
 
-    // --- 密度設定 ---
-    const cellSize = 380; // 縮小間距（原本 550），讓照片更密集
+    // --- 2. 滑鼠追蹤互動 ---
+    window.addEventListener('mousemove', (e) => {
+        glow.style.left = e.clientX + 'px';
+        glow.style.top = e.clientY + 'px';
+    });
+
+    // --- 3. 照片牆邏輯 (承襲 3.4 版優化) ---
+    const totalPhotos = 100;
+    const cellSize = 380; 
     const cols = 10;
     const rows = 10;
     const worldWidth = cols * cellSize;
     const worldHeight = rows * cellSize;
     const photos = [];
 
-    // 1. 初始化照片
     for (let i = 1; i <= totalPhotos; i++) {
         const a = document.createElement('a');
         a.href = `fangliao (${i}).jpg`;
         a.className = 'photo-card';
-        
-        // 擾動網格：在 380px 的格子內隨機偏移，確保不重疊
-        const baseX = ((i - 1) % cols) * cellSize;
-        const baseY = Math.floor((i - 1) / cols) * cellSize;
-        const x = baseX + (Math.random() - 0.5) * 80;
-        const y = baseY + (Math.random() - 0.5) * 80;
-
+        const x = ((i - 1) % cols) * cellSize + (Math.random()-0.5)*80;
+        const y = Math.floor((i - 1) / cols) * cellSize + (Math.random()-0.5)*80;
         const img = document.createElement('img');
         img.src = `fangliao (${i}).jpg`;
         img.loading = "lazy";
-        
         a.appendChild(img);
         universe.appendChild(a);
         photos.push({ element: a, x, y });
     }
 
-    // 2. 物理與循環邏輯
-    let viewX = 0, viewY = 0, velX = 0, velY = 0, isDragging = false;
-    let lastX, lastY;
+    let viewX = 0, viewY = 0, velX = 0, velY = 0, isDragging = false, lastX, lastY;
 
     function render() {
-        if (!isDragging) {
-            viewX += velX; viewY += velY;
-            velX *= 0.95; velY *= 0.95;
-        }
-
-        const winW = window.innerWidth;
-        const winH = window.innerHeight;
-
+        if (!isDragging) { viewX += velX; viewY += velY; velX *= 0.95; velY *= 0.95; }
+        const winW = window.innerWidth, winH = window.innerHeight;
         photos.forEach(p => {
-            // 無限循環計算
             let screenX = (p.x + viewX) % worldWidth;
             let screenY = (p.y + viewY) % worldHeight;
-            if (screenX < 0) screenX += worldWidth;
-            if (screenY < 0) screenY += worldHeight;
-
-            // 讓坐標以螢幕中心擴散
+            if (screenX < 0) screenX += worldWidth; if (screenY < 0) screenY += worldHeight;
             p.element.style.transform = `translate3d(${screenX - (worldWidth/2) + (winW/2)}px, ${screenY - (worldHeight/2) + (winH/2)}px, 0)`;
         });
         requestAnimationFrame(render);
     }
     render();
 
-    // 3. 開場動畫：從中心擴散飛出
     window.addEventListener('load', () => {
-        document.getElementById('header').classList.add('reveal');
-        // 初始化時先隨機給點速度，讓它動起來
-        velX = 1; velY = 0.5;
-        
         photos.forEach((p, index) => {
-            setTimeout(() => {
-                p.element.classList.add('reveal');
-            }, index * 15);
+            setTimeout(() => p.element.classList.add('reveal'), index * 10);
         });
         baguetteBox.run('#universe');
     });
 
-    // 4. 互動事件
-    const startDrag = (e) => {
-        if(e.target.tagName === 'IMG') return;
-        isDragging = true;
-        lastX = e.pageX || e.touches[0].pageX;
-        lastY = e.pageY || e.touches[0].pageY;
-    };
+    // 拖曳事件 (滑鼠 & 觸控)
+    const start = e => { if(e.target.tagName !== 'IMG') { isDragging = true; lastX = e.pageX || e.touches[0].pageX; lastY = e.pageY || e.touches[0].pageY; }};
+    const move = e => { if(!isDragging) return; const x = e.pageX || e.touches[0].pageX, y = e.pageY || e.touches[0].pageY; const dx = x - lastX, dy = y - lastY; viewX += dx; viewY += dy; velX = dx; velY = dy; lastX = x; lastY = y; };
+    window.addEventListener('mousedown', start); window.addEventListener('mousemove', move); window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('touchstart', start); window.addEventListener('touchmove', move); window.addEventListener('touchend', () => isDragging = false);
 
-    const moveDrag = (e) => {
-        if (!isDragging) return;
-        const x = e.pageX || e.touches[0].pageX;
-        const y = e.pageY || e.touches[0].pageY;
-        const dx = x - lastX;
-        const dy = y - lastY;
-        viewX += dx; viewY += dy;
-        velX = dx; velY = dy;
-        lastX = x; lastY = y;
-    };
-
-    window.addEventListener('mousedown', startDrag);
-    window.addEventListener('mousemove', moveDrag);
-    window.addEventListener('mouseup', () => isDragging = false);
-    window.addEventListener('touchstart', startDrag);
-    window.addEventListener('touchmove', moveDrag);
-    window.addEventListener('touchend', () => isDragging = false);
 </script>
 </body>
 </html>
